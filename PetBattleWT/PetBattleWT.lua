@@ -6,7 +6,7 @@ local ADDON_COLOR = "FFF9CC30";
 local ADDON_CHAT_HEADER  = "|c" .. ADDON_COLOR .. ADDON_NAME .. ":|r ";
 local ADDON_MSG_PREFIX = ADDON_NAME;
 
-local debugOn = 1;
+local debugOn = 0;
 
 local queueingWith;
 local myForfeit = true;
