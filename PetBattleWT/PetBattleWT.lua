@@ -279,7 +279,7 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
         debug("You have started a session with " .. queueingWith .. ".")
         myForfeit = true;
       elseif message == "already_in_session" then
-        debug("Gluth is already in a session.")
+        debug(sender.." is already in a session.")
       end
     end
   end
