@@ -19,6 +19,19 @@ local currentPets;
 local opponentsPets;
 local lastPetLevelCheck = 0;
 
+local function debug(msg, verbosity)
+  if (not verbosity or debugOn >= verbosity) then
+    if type(msg) == "string" or type(msg) == "number" then
+      print(ADDON_CHAT_HEADER..msg);
+    elseif type(msg) == "table" then
+      if not DevTools_Dump then
+        LoadAddOn("Blizzard UI Debug Tools");
+      end
+      DevTools_Dump(msg);
+    end
+  end
+end
+
 local button = CreateFrame("Button", "PetBattleWT_Button", UIParent, "UIPanelButtonTemplate")
 button:SetWidth(400);
 button:SetHeight(200);
@@ -49,7 +62,7 @@ queueIndicator:Show()
 local inQueueIndicator = CreateFrame("Frame", "PetBattleWT_inQueueIndicator", PetJournalFindBattle)
 inQueueIndicator:SetPoint("LEFT", PetJournalFindBattle, "RIGHT", 8, 0);
 inQueueIndicator:SetWidth(15)
-inQueueIndicator:SetHeight(inQueueIndicator:GetParent():GetHeight())
+inQueueIndicator:SetHeight(22)
 inQueueIndicator:SetBackdrop({
   bgFile = "Interface\\Tooltips\\UI-Tooltip-Background.png"
 })
@@ -59,7 +72,7 @@ inQueueIndicator:Hide()
 local petLevelIndicator = CreateFrame("Frame", "PetBattleWT_petLevelIndicator", PetJournalLoadout)
 petLevelIndicator:SetPoint("BOTTOM", inQueueIndicator, "TOP", 0, 4);
 petLevelIndicator:SetWidth(15)
-petLevelIndicator:SetHeight(petLevelIndicator:GetParent():GetHeight())
+petLevelIndicator:SetHeight(328)
 petLevelIndicator:SetBackdrop({
   bgFile = "Interface\\Tooltips\\UI-Tooltip-Background.png"
 })
@@ -81,19 +94,6 @@ StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"] = {
   hideOnEscape = true,
   preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
 }
-
-local function debug(msg, verbosity)
-  if (not verbosity or debugOn >= verbosity) then
-    if type(msg) == "string" or type(msg) == "number" then
-      print(ADDON_CHAT_HEADER..msg);
-    elseif type(msg) == "table" then
-      if not DevTools_Dump then
-        LoadAddOn("Blizzard UI Debug Tools");
-      end
-      DevTools_Dump(msg);
-    end
-  end
-end
 
 local function indicator_onUpdate(self, elapsed)
   if not partnerQueueTime then
@@ -149,9 +149,9 @@ local function sessionStart(name)
   petLevelCheck(true);
 end
 
---[[if debugOn >= 1 then
+if debugOn >= 1 then
   sessionStart("Gluth")
-end--]]
+end
 
 local function sessionEnd()
   queueingWith = nil;
@@ -239,7 +239,7 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
         myForfeit = true
       elseif message == "session_end" then
         debug("Your partner has ended the session.");
-  sessionEnd()
+	sessionEnd()
       elseif message == "queued" then
 	inQueueIndicator:SetBackdropColor(0, 1, 0, 0.8)
       elseif message == "notQueued" then
