@@ -60,9 +60,8 @@ queueIndicator:SetBackdrop({
 queueIndicator:Show()
 
 local inQueueIndicator = CreateFrame("Frame", "PetBattleWT_inQueueIndicator", PetJournalFindBattle)
-inQueueIndicator:SetPoint("LEFT", PetJournalFindBattle, "RIGHT", 8, 0);
 inQueueIndicator:SetWidth(15)
-inQueueIndicator:SetHeight(22)
+inQueueIndicator:SetHeight(28)
 inQueueIndicator:SetBackdrop({
   bgFile = "Interface\\Tooltips\\UI-Tooltip-Background.png"
 })
@@ -70,7 +69,6 @@ inQueueIndicator:SetBackdropColor(1, 0, 0, 0.8)
 inQueueIndicator:Hide()
 
 local petLevelIndicator = CreateFrame("Frame", "PetBattleWT_petLevelIndicator", PetJournalLoadout)
-petLevelIndicator:SetPoint("BOTTOM", inQueueIndicator, "TOP", 0, 4);
 petLevelIndicator:SetWidth(15)
 petLevelIndicator:SetHeight(328)
 petLevelIndicator:SetBackdrop({
@@ -108,14 +106,25 @@ local function petLevelIndicator_SetColor()
 end
 
 local function petLevelCheck()
+  local t = {};
+  
+  for i=1,C_PetJournal.GetNumPets() do
+    local GUID, _, _, _, level = C_PetJournal.GetPetInfoByIndex(i);
+    if C_PetJournal.PetIsSlotted(GUID) then
+      table.insert(t, tonumber(level) or 0);
+    end
+  end
+  
+  table.sort(t, function(a,b) return a>b end);
+    
   local s = "";
-  for i=1,3 do
+  for i=1,#t do
     if i > 1 then
       s = s .. "/";
     end
-    s = s .. (select(5, C_PetJournal.GetPetInfoByIndex(i)) or "0");
+    s = s .. t[i]
   end
-    
+  
   if s ~= currentPets or sendAnyway then
     currentPets = s;
     debug("Current Pets: "..currentPets, 1)
@@ -155,7 +164,7 @@ end
 
 local onUpdate_frame = CreateFrame("frame");
 onUpdate_frame:SetScript("OnUpdate", function()
-  if queueingWith and GetTime()-lastPetLevelCheck > 5 then
+  if queueingWith and GetTime()-lastPetLevelCheck > 1 then
     lastPetLevelCheck = GetTime();
     petLevelCheck();
   end
@@ -191,6 +200,7 @@ function events:PET_BATTLE_OPENING_START()
 end
 function events:PET_BATTLE_CLOSE()
   debug("PET_BATTLE_CLOSE", 1)
+  button:Hide()
 end
 function events:PET_BATTLE_QUEUE_PROPOSE_MATCH()
   debug("PET_BATTLE_QUEUE_PROPOSE_MATCH", 1);
@@ -227,6 +237,12 @@ end
 function events:PET_BATTLE_ABILITY_CHANGED()
   debug("PET_BATTLE_ABILITY_CHANGED", 1);
 end
+function events:ADDON_LOADED(name)
+  if PetJournal and not inQueueIndicator:GetPoint(1) then
+    inQueueIndicator:SetPoint("BOTTOMLEFT", PetJournal, "BOTTOMRIGHT", 1, 0);
+    petLevelIndicator:SetPoint("BOTTOM", inQueueIndicator, "TOP");
+  end
+end
 function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
   if prefix == ADDON_MSG_PREFIX then
     if queueingWith and sender == queueingWith then
@@ -248,6 +264,7 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
     else
       if message == "session_invite" then
         inviteName = sender;
+        StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"]["text"] = sender .. " has invited you to a "..ADDON_NAME.." session."
         StaticPopup_Show(ADDON_NAME.."_SESSION_INVITE")
       elseif message == "session_accept" then
         sessionStart(sender)
