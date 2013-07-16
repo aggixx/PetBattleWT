@@ -79,22 +79,6 @@ petLevelIndicator:SetBackdrop({
 petLevelIndicator:SetBackdropColor(1, 0, 0, 0.8)
 petLevelIndicator:Hide()
 
-StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"] = {
-  text = inviteName .. " has invited you to a "..ADDON_NAME.." session.",
-  button1 = ACCEPT,
-  button2 = CANCEL,
-  OnAccept = function(self)
-    SendAddonMessage(ADDON_MSG_PREFIX, "session_accept", "WHISPER", inviteName);
-    sessionStart(inviteName);
-    inviteName = "";
-    myForfeit = false;
-  end,
-  timeout = 0,
-  whileDead = true,
-  hideOnEscape = true,
-  preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
-}
-
 local function indicator_onUpdate(self, elapsed)
   if not partnerQueueTime then
     if GetTime() - selfQueueTime <= 3 then
@@ -123,22 +107,20 @@ local function petLevelIndicator_SetColor()
   end
 end
 
-local function petLevelCheck(sendAnyway)
-  if queueingWith and (GetTime()-lastPetLevelCheck > 5 or sendAnyway) then
-    lastPetLevelCheck = GetTime();
-    local s = "";
-    for i=1,3 do
-      if i > 1 then
-        s = s .. "/";
-      end
-      s = s .. (select(5, C_PetJournal.GetPetInfoByIndex(i)) or "0");
+local function petLevelCheck()
+  local s = "";
+  for i=1,3 do
+    if i > 1 then
+      s = s .. "/";
     end
+    s = s .. (select(5, C_PetJournal.GetPetInfoByIndex(i)) or "0");
+  end
     
-    if s ~= currentPets or sendAnyway then
-      currentPets = s;
-      petLevelIndicator_SetColor()
-      SendAddonMessage(ADDON_MSG_PREFIX, "pets:"..s, "WHISPER", queueingWith);
-    end
+  if s ~= currentPets or sendAnyway then
+    currentPets = s;
+    debug("Current Pets: "..currentPets, 1)
+    petLevelIndicator_SetColor()
+    SendAddonMessage(ADDON_MSG_PREFIX, "pets:"..s, "WHISPER", queueingWith);
   end
 end
 
@@ -149,9 +131,21 @@ local function sessionStart(name)
   petLevelCheck(true);
 end
 
-if debugOn >= 1 then
-  sessionStart("Gluth")
-end
+StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"] = {
+  text = inviteName .. " has invited you to a "..ADDON_NAME.." session.",
+  button1 = ACCEPT,
+  button2 = CANCEL,
+  OnAccept = function(self)
+    SendAddonMessage(ADDON_MSG_PREFIX, "session_accept", "WHISPER", inviteName);
+    sessionStart(inviteName);
+    inviteName = "";
+    myForfeit = false;
+  end,
+  timeout = 0,
+  whileDead = true,
+  hideOnEscape = true,
+  preferredIndex = 3,  -- avoid some UI taint, see http://www.wowace.com/announcements/how-to-avoid-some-ui-taint/
+}
 
 local function sessionEnd()
   queueingWith = nil;
@@ -162,6 +156,7 @@ end
 local onUpdate_frame = CreateFrame("frame");
 onUpdate_frame:SetScript("OnUpdate", function()
   if queueingWith and GetTime()-lastPetLevelCheck > 5 then
+    lastPetLevelCheck = GetTime();
     petLevelCheck();
   end
 end)
@@ -173,6 +168,8 @@ local function slashParse(msg, editbox)
       SendAddonMessage(ADDON_MSG_PREFIX, "session_end", "WHISPER", queueingWith);
       sessionEnd();
       debug("You have ended your current session.")
+    else
+      debug("You must be in a session to do that.")
     end
   elseif msg ~= "" then
     if queueingWith then
