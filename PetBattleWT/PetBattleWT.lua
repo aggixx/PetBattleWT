@@ -137,7 +137,7 @@ local function sessionStart(name)
   queueingWith = name;
   inQueueIndicator:Show()
   petLevelIndicator:Show()
-  petLevelCheck(true);
+  petLevelCheck();
 end
 
 StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"] = {
@@ -149,6 +149,10 @@ StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"] = {
     sessionStart(inviteName);
     inviteName = "";
     myForfeit = false;
+  end,
+  OnCancel = function(self)
+    SendAddonMessage(ADDON_MSG_PREFIX, "session_declined", "WHISPER", inviteName);
+    inviteName = "";
   end,
   timeout = 0,
   whileDead = true,
@@ -206,7 +210,6 @@ function events:PET_BATTLE_QUEUE_PROPOSE_MATCH()
   debug("PET_BATTLE_QUEUE_PROPOSE_MATCH", 1);
   if queueingWith then
     queueIndicator:SetScript("OnUpdate", indicator_onUpdate)
-    --queueIndicator:Show();
     SendAddonMessage(ADDON_MSG_PREFIX, "queue_pop", "WHISPER", queueingWith);
     selfQueueTime = GetTime();
   end
@@ -214,7 +217,6 @@ end
 function events:PET_BATTLE_QUEUE_PROPOSAL_DECLINED()
   if queueingWith then
     queueIndicator:SetScript("OnUpdate", nil)
-    --queueIndicator:Hide();
     selfQueueTime = nil;
     partnerQueueTime = nil;
   end
@@ -222,7 +224,6 @@ end
 function events:PET_BATTLE_QUEUE_PROPOSAL_ACCEPTED()
   if queueingWith then
     queueIndicator:SetScript("OnUpdate", nil)
-    --queueIndicator:Hide();
     selfQueueTime = nil;
     partnerQueueTime = nil;
   end
@@ -271,15 +272,21 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
       end
     else
       if message == "session_invite" then
-        inviteName = sender;
-        StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"]["text"] = sender .. " has invited you to a "..ADDON_NAME.." session."
-        StaticPopup_Show(ADDON_NAME.."_SESSION_INVITE")
+        if not inviteName then
+          inviteName = sender;
+          StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"]["text"] = sender .. " has invited you to a "..ADDON_NAME.." session."
+          StaticPopup_Show(ADDON_NAME.."_SESSION_INVITE")
+	else
+	  SendAddonMessage(ADDON_MSG_PREFIX, "already_in_session", "WHISPER", sender)
+	end
       elseif message == "session_accept" then
         sessionStart(sender)
         debug("You have started a session with " .. queueingWith .. ".")
         myForfeit = true;
       elseif message == "already_in_session" then
         debug(sender.." is already in a session.")
+      elseif message == "session_declined" then
+        debug(sender.." declined your invitation.")
       end
     end
   end
