@@ -59,7 +59,7 @@ queueIndicator:SetBackdrop({
 })
 queueIndicator:Show()
 
-local inQueueIndicator = CreateFrame("Frame", "PetBattleWT_inQueueIndicator", PetJournalFindBattle)
+local inQueueIndicator = CreateFrame("Frame", "PetBattleWT_inQueueIndicator", UIParent)
 inQueueIndicator:SetWidth(15)
 inQueueIndicator:SetHeight(28)
 inQueueIndicator:SetBackdrop({
@@ -68,7 +68,7 @@ inQueueIndicator:SetBackdrop({
 inQueueIndicator:SetBackdropColor(1, 0, 0, 0.8)
 inQueueIndicator:Hide()
 
-local petLevelIndicator = CreateFrame("Frame", "PetBattleWT_petLevelIndicator", PetJournalLoadout)
+local petLevelIndicator = CreateFrame("Frame", "PetBattleWT_petLevelIndicator", UIParent)
 petLevelIndicator:SetWidth(15)
 petLevelIndicator:SetHeight(328)
 petLevelIndicator:SetBackdrop({
@@ -110,7 +110,7 @@ local function petLevelCheck()
   
   for i=1,C_PetJournal.GetNumPets() do
     local GUID, _, _, _, level = C_PetJournal.GetPetInfoByIndex(i);
-    if C_PetJournal.PetIsSlotted(GUID) then
+    if GUID and C_PetJournal.PetIsSlotted(GUID) then
       table.insert(t, tonumber(level) or 0);
     end
   end
@@ -240,26 +240,34 @@ end
 function events:ADDON_LOADED(name)
   if PetJournal and not inQueueIndicator:GetPoint(1) then
     inQueueIndicator:SetPoint("BOTTOMLEFT", PetJournal, "BOTTOMRIGHT", 1, 0);
+    inQueueIndicator:SetParent(PetJournal);
     petLevelIndicator:SetPoint("BOTTOM", inQueueIndicator, "TOP");
+    petLevelIndicator:SetParent(PetJournal);
   end
 end
 function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
   if prefix == ADDON_MSG_PREFIX then
-    if queueingWith and sender == queueingWith then
-      if message == "queue_pop" then
-        partnerQueueTime = GetTime();
-      elseif message == "you_next" then
-        myForfeit = true
-      elseif message == "session_end" then
-        debug("Your partner has ended the session.");
-	sessionEnd()
-      elseif message == "queued" then
-	inQueueIndicator:SetBackdropColor(0, 1, 0, 0.8)
-      elseif message == "notQueued" then
-        inQueueIndicator:SetBackdropColor(1, 0, 0, 0.8)
-      elseif string.match(message, "pets:%d+/%d+/%d+") then
-        opponentsPets = string.match(message, "pets:(%d+/%d+/%d+)")
-	petLevelIndicator_SetColor()
+    if queueingWith then
+      if sender == queueingWith then
+        if message == "queue_pop" then
+          partnerQueueTime = GetTime();
+        elseif message == "you_next" then
+          myForfeit = true
+        elseif message == "session_end" then
+          debug("Your partner has ended the session.");
+	  sessionEnd()
+        elseif message == "queued" then
+	  inQueueIndicator:SetBackdropColor(0, 1, 0, 0.8)
+        elseif message == "notQueued" then
+          inQueueIndicator:SetBackdropColor(1, 0, 0, 0.8)
+        elseif string.match(message, "pets:%d+/%d+/%d+") then
+          opponentsPets = string.match(message, "pets:(%d+/%d+/%d+)")
+	  petLevelIndicator_SetColor()
+        end
+      else
+        if message == "session_invite" then
+          SendAddonMessage(ADDON_MSG_PREFIX, "already_in_session", "WHISPER", sender)
+        end
       end
     else
       if message == "session_invite" then
@@ -270,6 +278,8 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
         sessionStart(sender)
         debug("You have started a session with " .. queueingWith .. ".")
         myForfeit = true;
+      elseif message == "already_in_session" then
+        debug("Gluth is already in a session.")
       end
     end
   end
