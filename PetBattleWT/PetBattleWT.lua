@@ -65,7 +65,7 @@ inQueueIndicator:SetHeight(28)
 inQueueIndicator:SetBackdrop({
   bgFile = "Interface\\Tooltips\\UI-Tooltip-Background.png"
 })
-inQueueIndicator:SetBackdropColor(1, 0, 0, 0.8)
+inQueueIndicator:SetBackdropColor(1, 0, 0, 0.90)
 inQueueIndicator:Hide()
 
 local petLevelIndicator = CreateFrame("Frame", "PetBattleWT_petLevelIndicator", UIParent)
@@ -74,39 +74,59 @@ petLevelIndicator:SetHeight(328)
 petLevelIndicator:SetBackdrop({
   bgFile = "Interface\\Tooltips\\UI-Tooltip-Background.png"
 })
-petLevelIndicator:SetBackdropColor(1, 0, 0, 0.8)
+petLevelIndicator:SetBackdropColor(1, 0, 0, 0.90)
 petLevelIndicator:Hide()
 
 local function indicator_onUpdate(self, elapsed)
   if not partnerQueueTime then
     if GetTime() - selfQueueTime <= 3 then
-      queueIndicator:SetBackdropColor(1, 1, 0, 0.8)
+      queueIndicator:SetBackdropColor(1, 1, 0, 0.90)
     else
-      queueIndicator:SetBackdropColor(1, 0, 0, 0.8)
+      queueIndicator:SetBackdropColor(1, 0, 0, 0.90)
     end
   else
     if math.abs(selfQueueTime - partnerQueueTime) <= 3 then
-      queueIndicator:SetBackdropColor(0, 1, 0, 0.8)
+      queueIndicator:SetBackdropColor(0, 1, 0, 0.90)
     else
-      queueIndicator:SetBackdropColor(1, 0, 0, 0.8)
+      queueIndicator:SetBackdropColor(1, 0, 0, 0.90)
     end
   end
 end
 
 local function petLevelIndicator_SetColor()
-  if currentPets and opponentsPets and currentPets == opponentsPets then
-    petLevelIndicator:SetBackdropColor(0, 1, 0, 0.8);
-  elseif opponentsPets then
-    debug("Your opponents pets' levels are "..opponentsPets..".")
-    petLevelIndicator:SetBackdropColor(1, 0, 0, 0.8);
+  if currentPets and opponentsPets then
+    if currentPets == opponentsPets then
+      petLevelIndicator:SetBackdropColor(0, 1, 0, 0.90);
+    else
+      debug("Your opponents pets' levels are "..opponentsPets..".")
+      local mine = {string.match(currentPets, "(%d+)/?(%d*)/?(%d*)")};
+      local enemy = {string.match(opponentsPets, "(%d+)/?(%d*)/?(%d*)")};
+      
+      local limit1, limit2 = #mine, #enemy;
+      for i=0,limit1-1 do
+        for j=0,limit2-1 do
+	  if mine[limit1-i] == enemy[limit2-j] then
+	    table.remove(mine, limit1-i);
+	    table.remove(enemy, limit2-j);
+	    break;
+	  end
+	end
+      end
+      
+      if #mine == 1 and #enemy == 1 and math.abs(mine[1]-enemy[1]) <= 1 then
+        petLevelIndicator:SetBackdropColor(1, 1, 0, 0.90);
+      else
+        petLevelIndicator:SetBackdropColor(1, 0, 0, 0.90);
+      end
+    end
   else
     debug("Your opponent has no pets.")
-    petLevelIndicator:SetBackdropColor(1, 0, 0, 0.8);
+    petLevelIndicator:SetBackdropColor(1, 0, 0, 0.90);
   end
 end
 
 local function petLevelCheck(sendAnyway)
-  local t =  {};
+  local t = {};
   
   for i=1,C_PetJournal.GetNumPets() do
     local GUID, _, _, _, level = C_PetJournal.GetPetInfoByIndex(i);
@@ -258,9 +278,9 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
           debug("Your partner has ended the session.");
 	  sessionEnd()
         elseif message == "queued" then
-	  inQueueIndicator:SetBackdropColor(0, 1, 0, 0.8)
+	  inQueueIndicator:SetBackdropColor(0, 1, 0, 0.90)
         elseif message == "notQueued" then
-          inQueueIndicator:SetBackdropColor(1, 0, 0, 0.8)
+          inQueueIndicator:SetBackdropColor(1, 0, 0, 0.90)
         elseif string.match(message, "pets:%d+/%d+/%d+") then
           opponentsPets = string.match(message, "pets:(%d+/%d+/%d+)")
 	  petLevelIndicator_SetColor()
