@@ -12,7 +12,7 @@ local debugOn = 0;
 
 local queueingWith;
 local myForfeit = true;
-local inviteName = "";
+local inviteName;
 local partnerQueueTime;
 local selfQueueTime;
 local currentPets;
@@ -147,12 +147,12 @@ StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"] = {
   OnAccept = function(self)
     SendAddonMessage(ADDON_MSG_PREFIX, "session_accept", "WHISPER", inviteName);
     sessionStart(inviteName);
-    inviteName = "";
+    inviteName = nil;
     myForfeit = false;
   end,
   OnCancel = function(self)
     SendAddonMessage(ADDON_MSG_PREFIX, "session_declined", "WHISPER", inviteName);
-    inviteName = "";
+    inviteName = nil;
   end,
   timeout = 0,
   whileDead = true,
