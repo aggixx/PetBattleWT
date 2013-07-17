@@ -272,12 +272,10 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
       end
     else
       if message == "session_invite" then
-        if queueingWith == nil or queueingWith == "" then
-	  if inviteName then
-            inviteName = sender;
-            StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"]["text"] = sender .. " has invited you to a "..ADDON_NAME.." session."
-            StaticPopup_Show(ADDON_NAME.."_SESSION_INVITE")
-	  end
+        if not queueingWith and not inviteName then
+	  inviteName = sender;
+	  StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"]["text"] = sender .. " has invited you to a "..ADDON_NAME.." session."
+	  StaticPopup_Show(ADDON_NAME.."_SESSION_INVITE")
 	else
 	  SendAddonMessage(ADDON_MSG_PREFIX, "already_in_session", "WHISPER", sender)
 	end
