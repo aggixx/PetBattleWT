@@ -105,8 +105,8 @@ local function petLevelIndicator_SetColor()
   end
 end
 
-local function petLevelCheck()
-  local t = {};
+local function petLevelCheck(sendAnyway)
+  local t =  {};
   
   for i=1,C_PetJournal.GetNumPets() do
     local GUID, _, _, _, level = C_PetJournal.GetPetInfoByIndex(i);
@@ -137,7 +137,7 @@ local function sessionStart(name)
   queueingWith = name;
   inQueueIndicator:Show()
   petLevelIndicator:Show()
-  petLevelCheck();
+  petLevelCheck(true);
 end
 
 StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"] = {
