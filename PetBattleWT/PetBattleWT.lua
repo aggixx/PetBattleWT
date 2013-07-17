@@ -190,6 +190,7 @@ local function sessionEnd()
   inQueueIndicator:Hide()
   petLevelIndicator:Hide()
   inQueueIndicator:SetBackdropColor(0.5, 0.5, 0.5, 0.90);
+  opponentsPets = nil;
 end
 
 local onUpdate_frame = CreateFrame("frame");
@@ -290,13 +291,16 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
         elseif message == "notQueued" then
           inQueueIndicator:SetBackdropColor(1, 0, 0, 0.90)
         elseif string.match(message, "pets:%d+/%d+/%d+") then
-          opponentsPets = string.match(message, "pets:(%d+/?%d*/?%d*)")
-	  if opponentsPets and opponentsPets ~= "" then
-            debug("Your opponents pets' levels are "..opponentsPets..".")
-          else
-            debug("Your opponent has no pets.")
-          end
-	  petLevelIndicator_SetColor()
+          local pets = string.match(message, "pets:(%d+/?%d*/?%d*)")
+	  if pets ~= opponentsPets then
+	    opponentsPets = pets;
+	    if opponentsPets and opponentsPets ~= "" then
+              debug("Your opponents pets' levels are "..opponentsPets..".")
+            else
+              debug("Your opponent has no pets.")
+            end
+	    petLevelIndicator_SetColor()
+	  end
         end
       else
         if message == "session_invite" then
