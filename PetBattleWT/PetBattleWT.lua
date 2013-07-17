@@ -98,7 +98,6 @@ local function petLevelIndicator_SetColor()
     if currentPets == opponentsPets then
       petLevelIndicator:SetBackdropColor(0, 1, 0, 0.90);
     else
-      debug("Your opponents pets' levels are "..opponentsPets..".")
       local mine = {string.match(currentPets, "(%d+)/?(%d*)/?(%d*)")};
       local enemy = {string.match(opponentsPets, "(%d+)/?(%d*)/?(%d*)")};
       
@@ -120,7 +119,6 @@ local function petLevelIndicator_SetColor()
       end
     end
   else
-    debug("Your opponent has no pets.")
     petLevelIndicator:SetBackdropColor(1, 0, 0, 0.90);
   end
 end
@@ -153,11 +151,18 @@ local function petLevelCheck(sendAnyway)
   end
 end
 
+local function updateQueueStatus()
+  local status = C_PetBattles.GetPVPMatchmakingInfo() or "notQueued";
+  SendAddonMessage(ADDON_MSG_PREFIX, status, "WHISPER", queueingWith)
+end
+
 local function sessionStart(name)
   queueingWith = name;
   inQueueIndicator:Show()
   petLevelIndicator:Show()
   petLevelCheck(true);
+  inQueueIndicator:SetBackdropColor(1, 0, 0, 0.90);
+  updateQueueStatus();
 end
 
 StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"] = {
@@ -184,6 +189,7 @@ local function sessionEnd()
   queueingWith = nil;
   inQueueIndicator:Hide()
   petLevelIndicator:Hide()
+  inQueueIndicator:SetBackdropColor(0.5, 0.5, 0.5, 0.90);
 end
 
 local onUpdate_frame = CreateFrame("frame");
@@ -251,8 +257,7 @@ end
 function events:PET_BATTLE_QUEUE_STATUS(...)
   debug("PET_BATTLE_QUEUE_STATUS", 1)
   if queueingWith then
-    local status = C_PetBattles.GetPVPMatchmakingInfo() or "notQueued";
-    SendAddonMessage(ADDON_MSG_PREFIX, status, "WHISPER", queueingWith)
+    updateQueueStatus();
   end
 end
 function events:PET_BATTLE_ABILITY_CHANGED()
@@ -266,6 +271,9 @@ function events:ADDON_LOADED(name)
     petLevelIndicator:SetParent(PetJournal);
   end
 end
+function events:PLAYER_LOGOUT()
+  sessionEnd();
+end
 function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
   if prefix == ADDON_MSG_PREFIX then
     if queueingWith then
@@ -275,14 +283,19 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender)
         elseif message == "you_next" then
           myForfeit = true
         elseif message == "session_end" then
-          debug("Your partner has ended the session.");
+          debug(queuingWith .. " has terminated the session.");
 	  sessionEnd()
         elseif message == "queued" then
 	  inQueueIndicator:SetBackdropColor(0, 1, 0, 0.90)
         elseif message == "notQueued" then
           inQueueIndicator:SetBackdropColor(1, 0, 0, 0.90)
         elseif string.match(message, "pets:%d+/%d+/%d+") then
-          opponentsPets = string.match(message, "pets:(%d+/%d+/%d+)")
+          opponentsPets = string.match(message, "pets:(%d+/?%d*/?%d*)")
+	  if opponentsPets and opponentsPets ~= "" then
+            debug("Your opponents pets' levels are "..opponentsPets..".")
+          else
+            debug("Your opponent has no pets.")
+          end
 	  petLevelIndicator_SetColor()
         end
       else
