@@ -141,7 +141,7 @@ local function sessionStart(name)
 end
 
 StaticPopupDialogs[ADDON_NAME.."_SESSION_INVITE"] = {
-  text = inviteName .. " has invited you to a "..ADDON_NAME.." session.",
+  text = "",
   button1 = ACCEPT,
   button2 = CANCEL,
   OnAccept = function(self)
