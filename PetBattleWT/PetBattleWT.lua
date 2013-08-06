@@ -79,13 +79,13 @@ petLevelIndicator:Hide()
 
 local function indicator_onUpdate(self, elapsed)
   if not partnerQueueTime then
-    if GetTime() - selfQueueTime <= 3 then
+    if GetTime() - selfQueueTime <= 1 then
       queueIndicator:SetBackdropColor(1, 1, 0, 0.90)
     else
       queueIndicator:SetBackdropColor(1, 0, 0, 0.90)
     end
   else
-    if math.abs(selfQueueTime - partnerQueueTime) <= 3 then
+    if math.abs(selfQueueTime - partnerQueueTime) <= 1 then
       queueIndicator:SetBackdropColor(0, 1, 0, 0.90)
     else
       queueIndicator:SetBackdropColor(1, 0, 0, 0.90)
